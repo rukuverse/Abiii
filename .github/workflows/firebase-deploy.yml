@@ -2,7 +2,7 @@ name: Deploy to Firebase Hosting
 on:
   push:
     branches:
-      - main # Change this to master if your repo branch is named master
+      - main # Change to master if your branch is named master
 
 jobs:
   deploy:
@@ -13,5 +13,6 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: abiii-110308 # Replace this text with your actual Firebase Project ID
+          projectId: abiii-110308 # Put your actual Firebase Project ID here
           channelId: live
+          entryPoint: '.'
