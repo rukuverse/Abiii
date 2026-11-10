@@ -13,7 +13,8 @@ jobs:
         env:
           KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: printf '%s' "$KEY" > "$GOOGLE_APPLICATION_CREDENTIALS"
-      - name: Which account is this?
-        run: jq -r '"project_id: " + .project_id, "client_email: " + .client_email' "$GOOGLE_APPLICATION_CREDENTIALS"
+      - name: Which account is this
+        run: |
+          jq -r '.project_id, .client_email' "$GOOGLE_APPLICATION_CREDENTIALS"
       - name: Deploy
         run: npx --yes firebase-tools@latest deploy --only hosting --project abiii-110308 --non-interactive
