@@ -231,6 +231,15 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
 .dat .gr p{margin:0;max-width:62ch}
 @media(max-width:640px){.row{flex-wrap:wrap}.row>.ac{flex-basis:100%;justify-content:flex-start}.row.dat{flex-direction:column;align-items:stretch;gap:14px}}
 .row.dat{flex-direction:column;align-items:stretch;gap:14px}.row.dat .gr{flex:none;width:100%}.row.dat .ac{justify-content:flex-start}
+#gov{position:fixed;inset:0;z-index:999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);animation:govIn .3s ease both}
+@keyframes govIn{from{opacity:0}}
+#gov .wm{font-size:clamp(72px,24vw,132px);animation:govPop .75s cubic-bezier(.16,1,.3,1) both}
+@keyframes govPop{from{opacity:0;transform:translateY(12px) scale(.96)}}
+#gov .gl{width:clamp(150px,46vw,230px);height:3px;background:var(--l);overflow:hidden;position:relative}
+#gov .gl:after{content:"";position:absolute;top:0;bottom:0;width:40%;background:var(--b);animation:govBar 1.15s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes govBar{from{left:-40%}to{left:100%}}
+#gov .gt{font-size:12px;letter-spacing:.18em;color:#9a9a9a}
+@media(prefers-reduced-motion:reduce){#gov .wm,#gov .gl:after{animation:none}#gov .gl:after{left:30%}}
 </style>
 </head>
 <body>
@@ -266,7 +275,7 @@ const ySv=()=>{try{localStorage.setItem('abiii_sync',JSON.stringify(Y))}catch(e)
 const fbk=()=>FB.apiKey||S.set.fbKey||'',fbu=()=>String(FB.url||S.set.fbUrl||'').replace(/\/+$/,'');
 const ks=id=>String(id).replace(/[.#$\[\]\/]/g,'_'),rk=(k,id)=>k+'/i'+ks(id),dk=(k,id)=>k+'_i'+ks(id);
 const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' h ago'};
-const yErr=m=>({EMAIL_EXISTS:'That email already has an account. Sign in instead.',INVALID_LOGIN_CREDENTIALS:'Wrong email or password.',INVALID_PASSWORD:'Wrong email or password.',EMAIL_NOT_FOUND:'No account with that email.',WEAK_PASSWORD:'Password needs 6+ characters.',INVALID_EMAIL:'That email looks wrong.',OPERATION_NOT_ALLOWED:'Enable this sign-in method in Firebase (Authentication → Sign-in method).',TOO_MANY_ATTEMPTS_TRY_LATER:'Too many tries. Wait a bit.'}[String(m).split(' ')[0]]||String(m));
+const yErr=m=>({EMAIL_EXISTS:'That email already has an account. Sign in instead.',INVALID_LOGIN_CREDENTIALS:'Wrong email or password. Try again or tap Forgot password.',INVALID_PASSWORD:'Wrong password. Try again or tap Forgot password.',MISSING_PASSWORD:'Enter your password.',USER_DISABLED:'This account has been disabled.',EMAIL_NOT_FOUND:'No account with that email.',WEAK_PASSWORD:'Password needs 6+ characters.',INVALID_EMAIL:'That email looks wrong.',OPERATION_NOT_ALLOWED:'Enable this sign-in method in Firebase (Authentication → Sign-in method).',TOO_MANY_ATTEMPTS_TRY_LATER:'Too many tries. Wait a bit.'}[String(m).split(' ')[0]]||String(m));
 const ySt=()=>Y.uid?'Cloud sync on · '+esc(Y.email)+(Y.last?' · synced '+ago(Y.last):'')+'.':'Stored on this device. Sign in under Cloud sync (email or Google) to back it up and use it on other devices.';
 function ySched(){if(!Y.uid)return;clearTimeout(yT);yT=setTimeout(()=>ySync(0),4000)}
 async function yAuth(mode,email,pw){const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:'+mode+'?key='+fbk(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw,returnSecureToken:true})}),d=await r.json();if(!r.ok)throw new Error(d.error&&d.error.message||'Sign-in failed');return{uid:d.localId,email:d.email,rt:d.refreshToken,it:d.idToken,ex:Date.now()+(+d.expiresIn-60)*1e3}}
@@ -306,9 +315,9 @@ async function ySync(manual){
  finally{yBusy=0}}
 /* finish any sign-in (email or Google): switch account safely, then sync everything */
 function yDone(nw){
- const commit=()=>{if(S.set.owner&&S.set.owner!==nw.uid)S.set.su=0;Y=nw;ySv();close();toast('Signed in');ySync(1).then(()=>render())};
- if(S.set.owner&&S.set.owner!==nw.uid&&(S.topics.length||S.practiceSets.length||S.exams.length||S.focusLogs.length))ask("This device has data from another account. Replace it with this account's cloud data? Your current data is saved for undo.",()=>{try{localStorage.setItem(KP,JSON.stringify({...Object.fromEntries(Object.keys(K).map(c=>[c,S[c]])),set:S.set}))}catch(x){}for(const k in K)S[k]=[];S.set.dead=[];S.set.owner=nw.uid;S.set.su=0;sigsInit();save();commit()},'Replace');
- else commit()}
+ const commit=()=>{if(S.set.owner&&S.set.owner!==nw.uid)S.set.su=0;Y=nw;ySv();close();toast('Signed in');gTxt('Syncing your data');return Promise.race([ySync(1).then(()=>{render();if(document.getElementById('gov'))toast('Signed in')}),new Promise(r=>setTimeout(r,7000))])};
+ if(S.set.owner&&S.set.owner!==nw.uid&&(S.topics.length||S.practiceSets.length||S.exams.length||S.focusLogs.length))gBusy(0)||ask("This device has data from another account. Replace it with this account's cloud data? Your current data is saved for undo.",()=>{try{localStorage.setItem(KP,JSON.stringify({...Object.fromEntries(Object.keys(K).map(c=>[c,S[c]])),set:S.set}))}catch(x){}for(const k in K)S[k]=[];S.set.dead=[];S.set.owner=nw.uid;S.set.su=0;sigsInit();save();commit()},'Replace');
+ else return commit()}
 /* Google sign-in: Firebase's own popup (works on the Firebase-hosted site, no client ID needed). The result is handed to the same lightweight session as email sign-in. */
 let GSDK=null,GP=null;
 const gProj=()=>(fbu().match(/^https:\/\/([^.]+?)(?:-default-rtdb)?\./)||[])[1]||'';
@@ -317,8 +326,16 @@ function gLoad(){if(GP)return GP;const b='https://www.gstatic.com/firebasejs/10.
   const h=location.hostname,app=a.initializeApp({apiKey:fbk(),authDomain:/\.(web\.app|firebaseapp\.com)$/.test(h)?h:gProj()+'.firebaseapp.com',projectId:gProj()},'abiii-g');
   return GSDK={t,auth:t.getAuth(app)}}).catch(e=>{GP=null;throw e})}
 const gErr=e=>{const c=String(e&&e.code||'');return c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'?'Google sign-in was cancelled':c==='auth/popup-blocked'?'Allow popups for this site, then try again':c==='auth/unauthorized-domain'?'Add this site under Firebase → Authentication → Settings → Authorized domains':c==='auth/operation-not-allowed'?'Enable Google under Firebase → Authentication → Sign-in method':c==='auth/network-request-failed'?'Offline. Try again later':c==='auth/operation-not-supported-in-this-environment'?'Google sign-in is not supported in this browser. Use email':String((e&&e.message)||'Google sign-in failed')};
-function gBusy(on){let o=document.getElementById('gov');if(!on){if(o)o.remove();return}if(o)return;o=document.createElement('div');o.id='gov';o.style.cssText='position:fixed;inset:0;z-index:999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px';o.innerHTML='<div class="wm">Abiii</div><div class="mono">Signing in…</div>';document.body.appendChild(o)}
-async function gDone(r){const{t,auth}=GSDK,u=r.user,it=await u.getIdToken(),nw={uid:u.uid,email:u.email||'Google account',rt:u.refreshToken,it,ex:Date.now()+55*6e4,g:1};try{await t.signOut(auth)}catch(e){}yDone(nw)}
+function gBusy(on,fade){let o=document.getElementById('gov');clearTimeout(gBusy.t);
+ if(!on){if(!o)return;if(!fade){o.remove();return}
+  o.style.pointerEvents='none';o.style.animation='none';void o.offsetWidth;o.style.transition='opacity .55s ease';o.style.opacity='0';setTimeout(()=>o.remove(),620);
+  [['#app',10],['.top',10],['#nav',0]].forEach(([q,y])=>{const el=document.querySelector(q);if(el&&el.animate)el.animate([{opacity:0,transform:y?'translateY('+y+'px)':'none'},{opacity:1,transform:'none'}],{duration:700,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'})});return}
+ if(o)return;o=document.createElement('div');o.id='gov';o.innerHTML='<div class="wm">Abiii</div><div class="gl"></div><div class="gt mono">Signing you in</div>';document.body.appendChild(o);gBusy.t=setTimeout(()=>gBusy(0),25000)}
+function gTxt(m){const t=document.querySelector('#gov .gt');if(t)t.textContent=m}
+/* coming back from Google's full page: show the sign-in screen from the very first frame and skip the splash so the two never fight */
+const gRet=(()=>{try{return !!localStorage.getItem('abiii_gredir')}catch(e){return false}})();if(gRet)gBusy(1);
+addEventListener('pageshow',e=>{if(e.persisted)gBusy(0)});
+async function gDone(r){const{t,auth}=GSDK,u=r.user,it=await u.getIdToken(),nw={uid:u.uid,email:u.email||'Google account',rt:u.refreshToken,it,ex:Date.now()+55*6e4,g:1};try{await t.signOut(auth)}catch(e){}return yDone(nw)}
 let GSI=null;
 function gsiLoad(){return GSI||(GSI=new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.id)return ok();const e=document.createElement('script');e.src='https://accounts.google.com/gsi/client';e.async=true;e.onload=ok;e.onerror=()=>{GSI=null;no(new Error('gsi'))};document.head.appendChild(e)}))}
 async function gCred(resp){
@@ -333,10 +350,10 @@ async function gInit(){
  b.innerHTML='<button class="btn" id="gbt" data-act="gpop" disabled style="width:100%;max-width:300px;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continue with Google</button>';
  try{await gLoad();const x=$('#gbt');if(x)x.disabled=false}catch(e){const y=$('#gbtn');if(y)y.innerHTML='<span class="mono" style="text-align:center">Google sign-in is not available here. Use email instead.</span>'}}
 function cloudCfg(){open(`<h3>Cloud sync setup</h3><p class="mono" style="margin:10px 0">One-time: paste your Firebase Web API key and Realtime Database URL.</p><label class="fl"><span class="mono">API key</span><input id="fk" autocomplete="off"></label><label class="fl"><span class="mono">Database URL</span><input id="fu" placeholder="https://xxxx-default-rtdb.firebaseio.com" autocomplete="off"></label><div class="fa"><button class="btn" data-act="close">Cancel</button><button class="btn p" data-act="ycfg">Save</button></div>`)}
-function cloudIn(){open(`<h3>Cloud sync</h3><p class="mono" style="margin:10px 0">Your own account keeps your study data separate from anyone else's.</p><label class="fl"><span class="mono">Email</span><input id="ye" type="email" autocomplete="email"></label><label class="fl"><span class="mono">Password (6+ characters)</span><input id="yp" type="password" autocomplete="current-password"></label><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="yreset">Forgot password</button><button class="btn" data-act="yin" data-v="signUp">Create account</button><button class="btn p" data-act="yin" data-v="signInWithPassword">Sign in</button></div><div class="mono" style="margin:16px 0 10px;text-align:center">or</div><div id="gbtn" style="display:flex;justify-content:center;align-items:center;min-height:44px"></div>`);gInit()}
+function cloudIn(){open(`<h3>Cloud sync</h3><p class="mono" style="margin:10px 0">Your own account keeps your study data separate from anyone else's.</p><label class="fl"><span class="mono">Email</span><input id="ye" type="email" autocomplete="email"></label><label class="fl"><span class="mono">Password</span><input id="yp" type="password" autocomplete="current-password"></label><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="yreset">Forgot password</button><button class="btn" data-act="yin" data-v="signUp">Create account</button><button class="btn p" data-act="yin" data-v="signInWithPassword">Sign in</button></div><div class="mono" style="margin:16px 0 10px;text-align:center">or</div><div id="gbtn" style="display:flex;justify-content:center;align-items:center;min-height:44px"></div>`);gInit()}
 function cloudInfo(){open(`<h3>Cloud sync</h3><p style="margin:10px 0">Signed in as <b>${esc(Y.email)}</b>.</p><p class="mono">${Y.last?'Last sync '+ago(Y.last):'Not synced yet'}${Y.err?' · '+esc(Y.err):''}</p><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="close">Close</button><button class="btn" data-act="yout">Sign out</button><button class="btn p" data-act="ynow">Sync now</button></div>`)}
 sigsInit();
-function toast(m){const t=$('#toast');t.textContent=m;t.className='show';clearTimeout(toast.h);toast.h=setTimeout(()=>t.className='',2300)}
+function toast(m){const t=$('#toast');t.textContent=m;t.className='show';clearTimeout(toast.h);toast.h=setTimeout(()=>t.className='',Math.max(2300,String(m).length*60))}
 const I={home:'<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',rev:'<path d="M20 12a8 8 0 11-3-6.2M20 4v4h-4"/>',book:'<path d="M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10"/>',pra:'<path d="M4 12l5 5L20 6"/>',foc:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',cal:'<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>'};
 const ic=n=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">${I[n]}</svg>`;
 const mins=d=>S.focusLogs.filter(l=>l.date===d).reduce((a,l)=>a+(+l.durationMin||0),0);
@@ -493,7 +510,7 @@ let splashTimer,spDone=0,spAfter=0;
 function spAfterFx(){if(spAfter)return;spAfter=1;const b=$('.home-ab');if(b){b.classList.add('peek-in');setTimeout(()=>b.classList.remove('peek-in'),900)}setTimeout(()=>{if(!S.set.intro){S.set.intro=true;save();introForm()}else greet()},350)}
 function dismissSplash(){if(spDone)return;spDone=1;clearTimeout(splashTimer);const x=$('#sp');if(x)x.remove();spAfterFx()}
 (function(){
- const sp=$('#sp');if(!sp){spDone=1;spAfterFx();return}
+ const sp=$('#sp');if(gRet){if(sp)sp.remove();spDone=1;spAfter=1;return}if(!sp){spDone=1;spAfterFx();return}
  const cv=sp.querySelector('.sp-cv'),bg=sp.querySelector('.sp-bg'),wm=sp.querySelector('.wm'),
   chs=wm.querySelectorAll('.ch'),lv=wm.querySelector('.lv'),bars=lv.querySelectorAll('i'),ctx=cv.getContext('2d'),
   reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,
@@ -690,9 +707,10 @@ const ACT={
  mascot:()=>{S.set.mascot=S.set.mascot===false;save();render();if(S.set.mascot)say('cheer','Back again. Lets go.');else toast('Abiii is resting')},
  cloud:()=>{if(!fbk()||!fbu())return cloudCfg();Y.uid?cloudInfo():cloudIn()},
  ycfg:()=>{const k=$('#fk').value.trim(),u=$('#fu').value.trim();if(!k||!/^https:\/\/.+/.test(u))return toast('Enter the API key and the https database URL');S.set.fbKey=k;S.set.fbUrl=u.replace(/\/+$/,'');save();close();cloudIn()},
- yin:async(_,e)=>{const em=$('#ye').value.trim(),pw=$('#yp').value;if(!em||pw.length<6)return toast('Enter your email and a 6+ character password');
-  let nw;try{nw=await yAuth(e.dataset.v,em,pw)}catch(x){return toast(navigator.onLine===false?'Offline. Try again later':yErr(x.message))}
-  yDone(nw)},
+ yin:async(_,e)=>{const em=$('#ye').value.trim(),pw=$('#yp').value,up=e.dataset.v==='signUp';if(!em)return toast('Enter your email');if(!pw)return toast('Enter your password');if(up&&pw.length<6)return toast('Choose a password with 6+ characters');
+  if(e.disabled)return;e.disabled=true;
+  let nw;try{nw=await yAuth(e.dataset.v,em,pw)}catch(x){e.disabled=false;return toast(navigator.onLine===false?'Offline. Try again later':yErr(x.message))}
+  e.disabled=false;yDone(nw)},
  gpop:()=>{ /* must call the popup immediately from the tap, so browsers do not block it; falls back to a full-page redirect when popups cannot work (installed app, in-app browser) */
   if(!GSDK)return toast('Google is still loading. Try again in a moment');
   if(!/^https?:$/.test(location.protocol))return toast('Google sign-in needs the app opened from its website address');
@@ -732,13 +750,14 @@ document.addEventListener('pointerdown',e=>{mdn=isBd(e.target)?e.target:null},tr
 document.addEventListener('click',e=>{if(isBd(e.target)&&mdn===e.target){mdn=null;close()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#ov .mo'))close()});
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;if(navigator.vibrate&&el.matches('.btn,nav button,.sw button,.fc'))navigator.vibrate(6);const f=ACT[el.dataset.act];f&&f(+el.dataset.id,el)});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='yp'){const b=document.querySelector('[data-act="yin"][data-v="signInWithPassword"]');if(b)b.click()}});
 document.addEventListener('input',e=>{const i=e.target;if(i.id==='q'){const p=i.selectionStart;S.q=i.value;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)}if(i.id==='sj'){T.subject=i.value;saveClock()}});
 document.addEventListener('change',e=>{const i=e.target;if(i.id==='cm'){T.mins=Math.max(1,Math.min(600,+i.value||25));resetT();render()}if(i.id==='bk'){S.set.breaks=i.checked;save()}if(i.id==='imp')doImport(i)});
 (function(){try{S.set.schema=3;const k='abiii_snap_'+iso();if(!localStorage.getItem(k)&&(S.topics.length||S.practiceSets.length||S.exams.length||S.focusLogs.length))localStorage.setItem(k,JSON.stringify({topics:S.topics,practiceSets:S.practiceSets,exams:S.exams,focusLogs:S.focusLogs}));Object.keys(localStorage).filter(x=>x.startsWith('abiii_snap_')).sort().slice(0,-3).forEach(x=>localStorage.removeItem(x));save();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}})();
 setInterval(()=>{if(T.run||W.run||document.hidden)return;if(Math.random()<(S.set.freq==='Rare'?.12:.4))say()},6e5);
 /* finish a Google sign-in that went through the full-page redirect */
-(function(){let f;try{f=localStorage.getItem('abiii_gredir')}catch(e){}if(!f)return;try{localStorage.removeItem('abiii_gredir')}catch(e){}
- gBusy(1);gLoad().then(()=>GSDK.t.getRedirectResult(GSDK.auth)).then(r=>r?gDone(r):0).catch(e=>toast(gErr(e))).finally(()=>gBusy(0))})();
+(function(){if(!gRet)return;try{localStorage.removeItem('abiii_gredir')}catch(e){}
+ gLoad().then(()=>GSDK.t.getRedirectResult(GSDK.auth)).then(r=>r?gDone(r):0).catch(e=>toast(gErr(e))).finally(()=>gBusy(0,1))})();
 restoreClock();render();
 if(Y.uid)setTimeout(()=>ySync(0),2500);addEventListener('online',()=>ySync(0));
 document.addEventListener('pointerdown',()=>{const a=$('#ab');if(a&&String(a.className).indexOf('show')>-1){clearTimeout(abT);a.className=''}},true);
