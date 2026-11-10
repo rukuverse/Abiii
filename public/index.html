@@ -258,13 +258,13 @@ function stamp(){let c=0;for(const k in K)S[k].forEach(o=>{const j=JSON.stringif
 const save=()=>{const ch=stamp();try{for(const k in K)localStorage.setItem(K[k],JSON.stringify(S[k]));localStorage.setItem(KS,JSON.stringify(S.set))}catch(e){toast('Storage full — export a backup')}if(ch)ySched()};
 const mut=m=>{save();render();toast(m)};
 // ---- Cloud sync (Firebase Auth + Realtime Database over REST; no SDK). Paste your keys here or enter them in the app once. ----
-const FB={apiKey:'AIzaSyD_Rnmb5PVOb9OYm4ND27x7g5rpLrAMC_E',url:'https://abiii-110308-default-rtdb.asia-southeast1.firebasedatabase.app/',gid:'446151566439-g9ev5g1irg487t52ko80rl4knac16rg4.apps.googleusercontent.com'}; /* gid = Google OAuth Web client ID, only needed for 'Continue with Google' */
+const FB={apiKey:'AIzaSyD_Rnmb5PVOb9OYm4ND27x7g5rpLrAMC_E',url:'https://abiii-110308-default-rtdb.asia-southeast1.firebasedatabase.app/'};
 let Y=(()=>{try{return JSON.parse(localStorage.getItem('abiii_sync'))||{}}catch(e){return{}}})(),yBusy=0,yT=0;
 const ySv=()=>{try{localStorage.setItem('abiii_sync',JSON.stringify(Y))}catch(e){}};
 const fbk=()=>FB.apiKey||S.set.fbKey||'',fbu=()=>String(FB.url||S.set.fbUrl||'').replace(/\/+$/,'');
 const ks=id=>String(id).replace(/[.#$\[\]\/]/g,'_'),rk=(k,id)=>k+'/i'+ks(id),dk=(k,id)=>k+'_i'+ks(id);
 const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' h ago'};
-const yErr=m=>({EMAIL_EXISTS:'That email already has an account. Sign in instead.',INVALID_LOGIN_CREDENTIALS:'Wrong email or password.',INVALID_PASSWORD:'Wrong email or password.',EMAIL_NOT_FOUND:'No account with that email.',WEAK_PASSWORD:'Password needs 6+ characters.',INVALID_EMAIL:'That email looks wrong.',OPERATION_NOT_ALLOWED:'Enable this sign-in method in Firebase (Authentication → Sign-in method).',INVALID_IDP_RESPONSE:'Google rejected this sign-in. Check the Web client ID.',INVALID_REQUEST_URI:'This site address is not allowed. Add it under Firebase → Authentication → Settings → Authorized domains.',TOO_MANY_ATTEMPTS_TRY_LATER:'Too many tries. Wait a bit.'}[String(m).split(' ')[0]]||String(m));
+const yErr=m=>({EMAIL_EXISTS:'That email already has an account. Sign in instead.',INVALID_LOGIN_CREDENTIALS:'Wrong email or password.',INVALID_PASSWORD:'Wrong email or password.',EMAIL_NOT_FOUND:'No account with that email.',WEAK_PASSWORD:'Password needs 6+ characters.',INVALID_EMAIL:'That email looks wrong.',OPERATION_NOT_ALLOWED:'Enable this sign-in method in Firebase (Authentication → Sign-in method).',TOO_MANY_ATTEMPTS_TRY_LATER:'Too many tries. Wait a bit.'}[String(m).split(' ')[0]]||String(m));
 const ySt=()=>Y.uid?'Cloud sync on · '+esc(Y.email)+(Y.last?' · synced '+ago(Y.last):'')+'.':'Stored on this device. Sign in under Cloud sync (email or Google) to back it up and use it on other devices.';
 function ySched(){if(!Y.uid)return;clearTimeout(yT);yT=setTimeout(()=>ySync(0),4000)}
 async function yAuth(mode,email,pw){const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:'+mode+'?key='+fbk(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw,returnSecureToken:true})}),d=await r.json();if(!r.ok)throw new Error(d.error&&d.error.message||'Sign-in failed');return{uid:d.localId,email:d.email,rt:d.refreshToken,it:d.idToken,ex:Date.now()+(+d.expiresIn-60)*1e3}}
@@ -307,23 +307,18 @@ function yDone(nw){
  const commit=()=>{if(S.set.owner&&S.set.owner!==nw.uid)S.set.su=0;Y=nw;ySv();close();toast('Signed in');ySync(1).then(()=>render())};
  if(S.set.owner&&S.set.owner!==nw.uid&&(S.topics.length||S.practiceSets.length||S.exams.length||S.focusLogs.length))ask("This device has data from another account. Replace it with this account's cloud data? Your current data is saved for undo.",()=>{try{localStorage.setItem(KP,JSON.stringify({...Object.fromEntries(Object.keys(K).map(c=>[c,S[c]])),set:S.set}))}catch(x){}for(const k in K)S[k]=[];S.set.dead=[];S.set.owner=nw.uid;S.set.su=0;sigsInit();save();commit()},'Replace');
  else commit()}
-const gcid=()=>FB.gid||S.set.fbGid||'';
-function gLoad(){return window.google&&google.accounts&&google.accounts.id?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://accounts.google.com/gsi/client';e.async=true;e.onload=ok;e.onerror=()=>no(new Error('load'));document.head.appendChild(e);setTimeout(()=>no(new Error('timeout')),9000)})}
-async function gCb(r){
- if(!r||!r.credential)return toast('Google sign-in was cancelled');
- try{const ru=/^https?:/.test(location.protocol)?location.origin:'http://localhost',
-  x=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key='+fbk(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({postBody:'id_token='+encodeURIComponent(r.credential)+'&providerId=google.com',requestUri:ru,returnIdpCredential:true,returnSecureToken:true})}),d=await x.json();
-  if(!x.ok)throw new Error(d.error&&d.error.message||'Google sign-in failed');
-  yDone({uid:d.localId,email:d.email||d.emailRecovered||'Google account',rt:d.refreshToken,it:d.idToken,ex:Date.now()+(+d.expiresIn-60)*1e3,g:1})}
- catch(e){toast(navigator.onLine===false?'Offline. Try again later':yErr(e.message))}}
+/* Google sign-in: Firebase's own popup (works on the Firebase-hosted site, no client ID needed). The result is handed to the same lightweight session as email sign-in. */
+let GSDK=null,GP=null;
+const gProj=()=>(fbu().match(/^https:\/\/([^.]+?)(?:-default-rtdb)?\./)||[])[1]||'';
+function gLoad(){if(GP)return GP;const b='https://www.gstatic.com/firebasejs/10.14.1/';
+ return GP=Promise.all([import(b+'firebase-app.js'),import(b+'firebase-auth.js')]).then(([a,t])=>{
+  const h=location.hostname,app=a.initializeApp({apiKey:fbk(),authDomain:/\.(web\.app|firebaseapp\.com)$/.test(h)?h:gProj()+'.firebaseapp.com',projectId:gProj()},'abiii-g');
+  return GSDK={t,auth:t.getAuth(app)}}).catch(e=>{GP=null;throw e})}
+const gErr=e=>{const c=String(e&&e.code||'');return c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'?'Google sign-in was cancelled':c==='auth/popup-blocked'?'Allow popups for this site, then try again':c==='auth/unauthorized-domain'?'Add this site under Firebase → Authentication → Settings → Authorized domains':c==='auth/operation-not-allowed'?'Enable Google under Firebase → Authentication → Sign-in method':c==='auth/network-request-failed'?'Offline. Try again later':c==='auth/operation-not-supported-in-this-environment'?'Google sign-in is not supported in this browser. Use email':String((e&&e.message)||'Google sign-in failed')};
 async function gInit(){
  const b=$('#gbtn');if(!b)return;
- if(!gcid()){b.innerHTML='<button class="btn" data-act="gcfg">Set up Google sign-in</button>';return}
- b.innerHTML='<span class="mono">Loading Google…</span>';
- try{await gLoad();if(!$('#gbtn'))return;google.accounts.id.initialize({client_id:gcid(),callback:gCb,ux_mode:'popup',use_fedcm_for_prompt:true});
-  b.innerHTML='';google.accounts.id.renderButton(b,{type:'standard',theme:'filled_black',size:'large',text:'continue_with',shape:'rectangular',width:Math.min(300,b.clientWidth||280)})}
- catch(e){b.innerHTML='<span class="mono" style="text-align:center">Google sign-in is not available here. Use email instead.</span>'}}
-function gCfg(){open(`<h3>Google sign-in setup</h3><p class="mono" style="margin:10px 0">One-time: paste the Web client ID from Firebase → Authentication → Sign-in method → Google → Web SDK configuration.</p><label class="fl"><span class="mono">Web client ID</span><input id="gid" placeholder="1234-abc.apps.googleusercontent.com" autocomplete="off"></label><div class="fa"><button class="btn" data-act="close">Cancel</button><button class="btn p" data-act="gsave">Save</button></div>`)}
+ b.innerHTML='<button class="btn" id="gbt" data-act="gpop" disabled style="width:100%;max-width:300px;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continue with Google</button>';
+ try{await gLoad();const x=$('#gbt');if(x)x.disabled=false}catch(e){const y=$('#gbtn');if(y)y.innerHTML='<span class="mono" style="text-align:center">Google sign-in is not available here. Use email instead.</span>'}}
 function cloudCfg(){open(`<h3>Cloud sync setup</h3><p class="mono" style="margin:10px 0">One-time: paste your Firebase Web API key and Realtime Database URL.</p><label class="fl"><span class="mono">API key</span><input id="fk" autocomplete="off"></label><label class="fl"><span class="mono">Database URL</span><input id="fu" placeholder="https://xxxx-default-rtdb.firebaseio.com" autocomplete="off"></label><div class="fa"><button class="btn" data-act="close">Cancel</button><button class="btn p" data-act="ycfg">Save</button></div>`)}
 function cloudIn(){open(`<h3>Cloud sync</h3><p class="mono" style="margin:10px 0">Your own account keeps your study data separate from anyone else's.</p><label class="fl"><span class="mono">Email</span><input id="ye" type="email" autocomplete="email"></label><label class="fl"><span class="mono">Password (6+ characters)</span><input id="yp" type="password" autocomplete="current-password"></label><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="yreset">Forgot password</button><button class="btn" data-act="yin" data-v="signUp">Create account</button><button class="btn p" data-act="yin" data-v="signInWithPassword">Sign in</button></div><div class="mono" style="margin:16px 0 10px;text-align:center">or</div><div id="gbtn" style="display:flex;justify-content:center;align-items:center;min-height:44px"></div>`);gInit()}
 function cloudInfo(){open(`<h3>Cloud sync</h3><p style="margin:10px 0">Signed in as <b>${esc(Y.email)}</b>.</p><p class="mono">${Y.last?'Last sync '+ago(Y.last):'Not synced yet'}${Y.err?' · '+esc(Y.err):''}</p><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="close">Close</button><button class="btn" data-act="yout">Sign out</button><button class="btn p" data-act="ynow">Sync now</button></div>`)}
@@ -685,11 +680,14 @@ const ACT={
  yin:async(_,e)=>{const em=$('#ye').value.trim(),pw=$('#yp').value;if(!em||pw.length<6)return toast('Enter your email and a 6+ character password');
   let nw;try{nw=await yAuth(e.dataset.v,em,pw)}catch(x){return toast(navigator.onLine===false?'Offline. Try again later':yErr(x.message))}
   yDone(nw)},
- gcfg:()=>gCfg(),
- gsave:()=>{const v=$('#gid').value.trim();if(!/^[\w.-]+\.apps\.googleusercontent\.com$/.test(v))return toast('That does not look like a Web client ID');S.set.fbGid=v;save();close();cloudIn()},
+ gpop:()=>{ /* must call the popup immediately from the tap, so browsers do not block it */
+  if(!GSDK)return toast('Google is still loading. Try again in a moment');
+  if(!/^https?:$/.test(location.protocol))return toast('Google sign-in needs the app opened from its website address');
+  const{t,auth}=GSDK;
+  t.signInWithPopup(auth,new t.GoogleAuthProvider()).then(async r=>{const u=r.user,it=await u.getIdToken(),nw={uid:u.uid,email:u.email||'Google account',rt:u.refreshToken,it,ex:Date.now()+55*6e4,g:1};try{await t.signOut(auth)}catch(e){}yDone(nw)}).catch(e=>toast(gErr(e)))},
  yreset:async()=>{const em=$('#ye').value.trim();if(!em)return toast('Enter your email first');try{const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key='+fbk(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestType:'PASSWORD_RESET',email:em})});toast(r.ok?'Reset email sent':'Could not send the reset email')}catch(x){toast('Offline. Try again later')}},
  ynow:()=>{close();ySync(1)},
- yout:()=>ask('Sign out? Your data stays on this device.',()=>{Y={};ySv();try{google.accounts.id.disableAutoSelect()}catch(e){}render();toast('Signed out')},'Sign out'),
+ yout:()=>ask('Sign out? Your data stays on this device.',()=>{Y={};ySv();render();toast('Signed out')},'Sign out'),
  view:(_,e)=>{V.v=e.dataset.v;render()},
  wgo:()=>{if(W.run){W.acc+=Date.now()-W.start;W.run=false}else{W.start=Date.now();W.run=true}render()},
  wreset:()=>{const go=()=>{W.run=false;W.acc=0;W.start=0;render()};Wms()>6e4?ask('Reset the stopwatch without logging?',go,'Reset'):go()},
