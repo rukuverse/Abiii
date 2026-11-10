@@ -260,7 +260,7 @@ const mut=m=>{save();render();toast(m)};
 // ---- Cloud sync (Firebase Auth + Realtime Database over REST; no SDK). Paste your keys here or enter them in the app once. ----
 const FB={apiKey:'AIzaSyD_Rnmb5PVOb9OYm4ND27x7g5rpLrAMC_E',url:'https://abiii-110308-default-rtdb.asia-southeast1.firebasedatabase.app/'};
 /* Google button inside the app (no redirect): paste your Web client ID here (Firebase → Authentication → Sign-in method → Google → Web SDK configuration). Leave '' to use the popup/redirect flow. */
-const GCID='446151566439-g9ev5g1irg487t52ko80rl4knac16rg4.apps.googleusercontent.com';
+const GCID='';
 let Y=(()=>{try{return JSON.parse(localStorage.getItem('abiii_sync'))||{}}catch(e){return{}}})(),yBusy=0,yT=0;
 const ySv=()=>{try{localStorage.setItem('abiii_sync',JSON.stringify(Y))}catch(e){}};
 const fbk=()=>FB.apiKey||S.set.fbKey||'',fbu=()=>String(FB.url||S.set.fbUrl||'').replace(/\/+$/,'');
@@ -317,6 +317,7 @@ function gLoad(){if(GP)return GP;const b='https://www.gstatic.com/firebasejs/10.
   const h=location.hostname,app=a.initializeApp({apiKey:fbk(),authDomain:/\.(web\.app|firebaseapp\.com)$/.test(h)?h:gProj()+'.firebaseapp.com',projectId:gProj()},'abiii-g');
   return GSDK={t,auth:t.getAuth(app)}}).catch(e=>{GP=null;throw e})}
 const gErr=e=>{const c=String(e&&e.code||'');return c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'?'Google sign-in was cancelled':c==='auth/popup-blocked'?'Allow popups for this site, then try again':c==='auth/unauthorized-domain'?'Add this site under Firebase → Authentication → Settings → Authorized domains':c==='auth/operation-not-allowed'?'Enable Google under Firebase → Authentication → Sign-in method':c==='auth/network-request-failed'?'Offline. Try again later':c==='auth/operation-not-supported-in-this-environment'?'Google sign-in is not supported in this browser. Use email':String((e&&e.message)||'Google sign-in failed')};
+function gBusy(on){let o=document.getElementById('gov');if(!on){if(o)o.remove();return}if(o)return;o=document.createElement('div');o.id='gov';o.style.cssText='position:fixed;inset:0;z-index:999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px';o.innerHTML='<div class="wm">Abiii</div><div class="mono">Signing in…</div>';document.body.appendChild(o)}
 async function gDone(r){const{t,auth}=GSDK,u=r.user,it=await u.getIdToken(),nw={uid:u.uid,email:u.email||'Google account',rt:u.refreshToken,it,ex:Date.now()+55*6e4,g:1};try{await t.signOut(auth)}catch(e){}yDone(nw)}
 let GSI=null;
 function gsiLoad(){return GSI||(GSI=new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.id)return ok();const e=document.createElement('script');e.src='https://accounts.google.com/gsi/client';e.async=true;e.onload=ok;e.onerror=()=>{GSI=null;no(new Error('gsi'))};document.head.appendChild(e)}))}
@@ -696,10 +697,10 @@ const ACT={
   if(!GSDK)return toast('Google is still loading. Try again in a moment');
   if(!/^https?:$/.test(location.protocol))return toast('Google sign-in needs the app opened from its website address');
   const{t,auth}=GSDK,pr=new t.GoogleAuthProvider(),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone,
-   viaRedirect=()=>{try{localStorage.setItem('abiii_gredir','1')}catch(e){}t.signInWithRedirect(auth,pr).catch(e=>{try{localStorage.removeItem('abiii_gredir')}catch(_){}toast(gErr(e))})};
-  if(standalone)return viaRedirect();
+   viaRedirect=()=>{gBusy(1);try{localStorage.setItem('abiii_gredir','1')}catch(e){}t.signInWithRedirect(auth,pr).catch(e=>{gBusy(0);try{localStorage.removeItem('abiii_gredir')}catch(_){}toast(gErr(e))})};
+  if(standalone||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))return viaRedirect();
   t.signInWithPopup(auth,pr).then(gDone).catch(e=>{const c=String(e&&e.code||'');if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-this-environment')viaRedirect();else toast(gErr(e))})},
- gred:async()=>{try{await gLoad();const{t,auth}=GSDK;try{localStorage.setItem('abiii_gredir','1')}catch(e){}await t.signInWithRedirect(auth,new t.GoogleAuthProvider())}catch(e){try{localStorage.removeItem('abiii_gredir')}catch(_){}toast(gErr(e))}},
+ gred:async()=>{try{gBusy(1);await gLoad();const{t,auth}=GSDK;try{localStorage.setItem('abiii_gredir','1')}catch(e){}await t.signInWithRedirect(auth,new t.GoogleAuthProvider())}catch(e){gBusy(0);try{localStorage.removeItem('abiii_gredir')}catch(_){}toast(gErr(e))}},
  yreset:async()=>{const em=$('#ye').value.trim();if(!em)return toast('Enter your email first');try{const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key='+fbk(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestType:'PASSWORD_RESET',email:em})});toast(r.ok?'Reset email sent':'Could not send the reset email')}catch(x){toast('Offline. Try again later')}},
  ynow:()=>{close();ySync(1)},
  yout:()=>ask('Sign out? Your data stays on this device.',()=>{Y={};ySv();render();toast('Signed out')},'Sign out'),
@@ -737,7 +738,7 @@ document.addEventListener('change',e=>{const i=e.target;if(i.id==='cm'){T.mins=M
 setInterval(()=>{if(T.run||W.run||document.hidden)return;if(Math.random()<(S.set.freq==='Rare'?.12:.4))say()},6e5);
 /* finish a Google sign-in that went through the full-page redirect */
 (function(){let f;try{f=localStorage.getItem('abiii_gredir')}catch(e){}if(!f)return;try{localStorage.removeItem('abiii_gredir')}catch(e){}
- gLoad().then(()=>GSDK.t.getRedirectResult(GSDK.auth)).then(r=>{if(r)gDone(r)}).catch(e=>toast(gErr(e)))})();
+ gBusy(1);gLoad().then(()=>GSDK.t.getRedirectResult(GSDK.auth)).then(r=>r?gDone(r):0).catch(e=>toast(gErr(e))).finally(()=>gBusy(0))})();
 restoreClock();render();
 if(Y.uid)setTimeout(()=>ySync(0),2500);addEventListener('online',()=>ySync(0));
 document.addEventListener('pointerdown',()=>{const a=$('#ab');if(a&&String(a.className).indexOf('show')>-1){clearTimeout(abT);a.className=''}},true);
