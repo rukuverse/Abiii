@@ -257,7 +257,7 @@ function stamp(){let c=0;for(const k in K)S[k].forEach(o=>{const j=JSON.stringif
 const save=()=>{const ch=stamp();try{for(const k in K)localStorage.setItem(K[k],JSON.stringify(S[k]));localStorage.setItem(KS,JSON.stringify(S.set))}catch(e){toast('Storage full — export a backup')}if(ch)ySched()};
 const mut=m=>{save();render();toast(m)};
 // ---- Cloud sync (Firebase Auth + Realtime Database over REST; no SDK). Paste your keys here or enter them in the app once. ----
-const FB={apiKey:'',url:''};
+const FB={apiKey:'AIzaSyD_Rnmb5PVOb9OYm4ND27x7g5rpLrAMC_E',url:'https://abiii-110308-default-rtdb.asia-southeast1.firebasedatabase.app/'};
 let Y=(()=>{try{return JSON.parse(localStorage.getItem('abiii_sync'))||{}}catch(e){return{}}})(),yBusy=0,yT=0;
 const ySv=()=>{try{localStorage.setItem('abiii_sync',JSON.stringify(Y))}catch(e){}};
 const fbk=()=>FB.apiKey||S.set.fbKey||'',fbu=()=>String(FB.url||S.set.fbUrl||'').replace(/\/+$/,'');
