@@ -1,25 +1,19 @@
 name: Deploy to Firebase Hosting
 on:
   push:
-    branches:
-      - main # Change to master if your branch is named master
-
+    branches: [main]
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Inject Key File
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ github.workspace }}/firebase-key.json
-
-      - name: Deploy to Firebase
-        run: |
-          cd ${{ github.workspace }}
-          firebase deploy --only hosting --project abiii-110308 --non-interactive
+      - uses: actions/checkout@v4
+      - name: Write key file
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: '${{ github.workspace }}/firebase-key.json'
+          KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$KEY" > "$GOOGLE_APPLICATION_CREDENTIALS"
+      - name: Which account is this?
+        run: jq -r '"project_id: " + .project_id, "client_email: " + .client_email' "$GOOGLE_APPLICATION_CREDENTIALS"
+      - name: Deploy
+        run: npx --yes firebase-tools@latest deploy --only hosting --project abiii-110308 --non-interactive
