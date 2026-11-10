@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Abiii</title>
 <meta name="theme-color" content="#000000">
+<script>try{if(JSON.parse(localStorage.getItem("abiii_settings")).theme==="Light")document.documentElement.classList.add("light")}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
@@ -240,10 +241,21 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
 @keyframes govBar{from{left:-40%}to{left:100%}}
 #gov .gt{font-size:12px;letter-spacing:.18em;color:#9a9a9a}
 @media(prefers-reduced-motion:reduce){#gov .wm,#gov .gl:after{animation:none}#gov .gl:after{left:30%}}
+.dup{color:#4ade80}.ddn{color:var(--r)}
+html.light{filter:invert(1) hue-rotate(180deg);background:#000}
+html.light #sp,html.light #ab svg,html.light .home-ab svg{filter:invert(1) hue-rotate(180deg)}
+/* polish pass */
+.gr p{white-space:pre-line;overflow-wrap:anywhere}
+button:focus-visible,.fc:focus-visible,.tag:focus-visible{outline:2px solid #7f9bff;outline-offset:2px}
+nav button .bd{position:absolute;top:5px;left:calc(50% + 7px);min-width:16px;height:16px;padding:0 4px;background:var(--b);color:#fff;font:700 9px/16px ui-monospace,Menlo,monospace;letter-spacing:0;text-align:center}
+@media(min-width:820px){nav button .bd{position:static;margin-left:8px;display:inline-block}}
+.ln.exl{text-decoration:none;text-align:left;line-height:1.5}
+.wkab{margin-top:14px;font:italic 400 19px/1.35 'Instrument Serif',Georgia,"Iowan Old Style",serif;color:#cfcfcb}
+.wkab .mono{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
-<div class="w"><div class="top"><span class="wm" data-act="hi">Ab<span class="lv"><i></i><i></i><i></i></span></span><span class="mono" id="fo"></span></div></div>
+<div class="w"><div class="top"><span class="wm" data-act="hi">Ab<span class="lv"><i></i><i></i><i></i></span></span><span style="display:flex;gap:16px;align-items:baseline"><button class="ln" data-act="gs" aria-label="Search everything">Search</button><span class="mono" id="fo"></span></span></div></div>
 <nav id="nav"></nav>
 <main class="w in" id="app"></main>
 <div id="sp" aria-hidden="true"><div class="sp-bg"></div><canvas class="sp-cv"></canvas><div class="sp-stage"><div class="sp-cam"><div class="wm"><span class="ch">A</span><span class="ch">b</span><span class="lv"><i></i><i></i><i></i></span></div></div></div></div>
@@ -311,7 +323,8 @@ async function ySync(manual){
   Y.last=Date.now();Y.err='';ySv();S.set.owner=Y.uid;save();
   if(changed||manual)render();
   if(manual||changed)toast(changed?'Synced · updated from cloud':'Synced')
- }catch(e){Y.err=String(e.message||e);ySv();if(manual)toast(yErr(Y.err))}
+  ySdot()
+ }catch(e){Y.err=String(e.message||e);ySv();ySdot();if(manual)toast(yErr(Y.err))}
  finally{yBusy=0}}
 /* finish any sign-in (email or Google): switch account safely, then sync everything */
 function yDone(nw){
@@ -350,7 +363,7 @@ async function gInit(){
  b.innerHTML='<button class="btn" id="gbt" data-act="gpop" disabled style="width:100%;max-width:300px;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continue with Google</button>';
  try{await gLoad();const x=$('#gbt');if(x)x.disabled=false}catch(e){const y=$('#gbtn');if(y)y.innerHTML='<span class="mono" style="text-align:center">Google sign-in is not available here. Use email instead.</span>'}}
 function cloudCfg(){open(`<h3>Cloud sync setup</h3><p class="mono" style="margin:10px 0">One-time: paste your Firebase Web API key and Realtime Database URL.</p><label class="fl"><span class="mono">API key</span><input id="fk" autocomplete="off"></label><label class="fl"><span class="mono">Database URL</span><input id="fu" placeholder="https://xxxx-default-rtdb.firebaseio.com" autocomplete="off"></label><div class="fa"><button class="btn" data-act="close">Cancel</button><button class="btn p" data-act="ycfg">Save</button></div>`)}
-function cloudIn(){open(`<h3>Cloud sync</h3><p class="mono" style="margin:10px 0">Your own account keeps your study data separate from anyone else's.</p><label class="fl"><span class="mono">Email</span><input id="ye" type="email" autocomplete="email"></label><label class="fl"><span class="mono">Password</span><input id="yp" type="password" autocomplete="current-password"></label><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="yreset">Forgot password</button><button class="btn" data-act="yin" data-v="signUp">Create account</button><button class="btn p" data-act="yin" data-v="signInWithPassword">Sign in</button></div><div class="mono" style="margin:16px 0 10px;text-align:center">or</div><div id="gbtn" style="display:flex;justify-content:center;align-items:center;min-height:44px"></div>`);gInit()}
+function cloudIn(){open(`<h3>Cloud sync</h3><p class="mono" style="margin:10px 0">Your own account keeps your study data separate from anyone else's.</p><label class="fl"><span class="mono">Email</span><input id="ye" type="email" autocomplete="email"></label><label class="fl"><span class="mono">Password</span><input id="yp" type="password" autocomplete="current-password"></label><button type="button" class="ln" id="pwt" data-act="pw" style="margin-top:6px">Show password</button><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="yreset">Forgot password</button><button class="btn" data-act="yin" data-v="signUp">Create account</button><button class="btn p" data-act="yin" data-v="signInWithPassword">Sign in</button></div><div class="mono" style="margin:16px 0 10px;text-align:center">or</div><div id="gbtn" style="display:flex;justify-content:center;align-items:center;min-height:44px"></div>`);gInit()}
 function cloudInfo(){open(`<h3>Cloud sync</h3><p style="margin:10px 0">Signed in as <b>${esc(Y.email)}</b>.</p><p class="mono">${Y.last?'Last sync '+ago(Y.last):'Not synced yet'}${Y.err?' · '+esc(Y.err):''}</p><div class="fa" style="flex-wrap:wrap"><button class="btn" data-act="close">Close</button><button class="btn" data-act="yout">Sign out</button><button class="btn p" data-act="ynow">Sync now</button></div>`)}
 sigsInit();
 function toast(m){const t=$('#toast');t.textContent=m;t.className='show';clearTimeout(toast.h);toast.h=setTimeout(()=>t.className='',Math.max(2300,String(m).length*60))}
@@ -378,15 +391,18 @@ function home(){
  const wk=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return{m:mins(iso(d)),l:d.toLocaleDateString('en-GB',{weekday:'narrow'}),t:i==6}}),mx=Math.max(1,...wk.map(x=>x.m));
  const sd=by(S.focusLogs,l=>+l.durationMin||0),st=sd.reduce((a,x)=>a+x[1],0)||1;
  const pa=[...new Set(S.practiceSets.map(x=>x.subject||'General'))].map(s=>[s,acc(S.practiceSets.filter(x=>(x.subject||'General')===s))]).filter(x=>x[1]!==null);
- return `<div class="ph hero"><div><div class="mono" style="margin-bottom:12px">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div><h1>${tm}<span class="u">/ ${g} min</span></h1><div class="tr" style="margin:14px 0 4px;max-width:320px"><i style="width:${p*100}%"></i></div><button class="ln" data-act="goal">Daily goal — edit</button></div><button class="av home-ab" data-act="mascotTap" aria-label="Tap Abiii for encouragement">${AB('idle',tm>=g,92)}</button></div>
+ return `<div class="ph hero"><div><div class="mono" style="margin-bottom:12px">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div><h1>${tm}<span class="u">/ ${g} min</span></h1><div class="tr" style="margin:14px 0 4px;max-width:320px"><i style="width:${p*100}%"></i></div><button class="ln" data-act="goal">Daily goal — edit</button>${goalHint()}${examChip(ex[0])}</div><button class="av home-ab" data-act="mascotTap" aria-label="Tap Abiii for encouragement">${AB('idle',tm>=g,92)}</button></div>
  <div class="st"><div><div class="mono">Due now</div><div class="num ${due?'bl':''}">${due}</div></div><div><div class="mono">Chapters done</div><div class="num">${dn}<small>/${S.topics.length}</small></div></div><div><div class="mono">Accuracy</div><div class="num">${ac==null?'—':ac+'<small>%</small>'}</div></div></div>
+ ${planCard()}
  ${sec('Continue studying','01')}${c?`<div class="row"><div class="gr"><div class="mono">${esc(c.subject)} · ${esc(c.status||'Unread')}</div><h3>${esc(c.title)}</h3><div class="mono" style="margin-top:4px">${pages(c)}target ${fmt(c.targetDate)}</div></div><button class="btn b" data-act="cont" data-id="${c.id}">Start focus →</button></div>`:empty('Nothing in progress','Log a textbook chapter to get a study shortcut here.',`<button class="btn p" data-act="addT">+ Chapter</button>`)}
- ${sec('Upcoming exams','02')}${ex.length?ex.map(e=>`<div class="row"><div class="gr"><div class="mono">${fmt(e.date)}</div><h3>${esc(e.title)}</h3><div class="mono" style="margin-top:4px">${esc(e.syllabus||'')}</div></div><div class="num">${dd(e.date)}<small>days</small></div></div>`).join(''):empty('No exams ahead','Add a date to see the countdown.',`<button class="btn p" data-act="addE">+ Exam</button>`)}
+ ${sec('Upcoming exams','02')}${ex.length?ex.map(e=>`<div class="row"><div class="gr"><div class="mono">${fmt(e.date)}</div><h3>${esc(e.title)}</h3><div class="mono" style="margin-top:4px">${esc(e.syllabus||'')}</div></div><div class="num ${dd(e.date)<=3?'rd':dd(e.date)<=7?'bl':''}">${dl2(dd(e.date))}</div></div>`).join(''):empty('No exams ahead','Add a date to see the countdown.',`<button class="btn p" data-act="addE">+ Exam</button>`)}
+ ${weekBlock()}
  ${sec('Analytics','03')}<div class="cols"><div><div class="mono" style="margin-top:14px">Focus · last 7 days · ${wk.reduce((a,x)=>a+x.m,0)} min</div><div class="wk">${wk.map(x=>`<div class="${x.t?'t':''}"><span class="mono">${x.m||''}</span><i style="height:${Math.max(2,x.m/mx*90)}px"></i><span class="mono">${x.l}</span></div>`).join('')}</div></div>
  <div><div class="mono" style="margin-top:14px">Subject distribution</div>${sd.length?sd.slice(0,5).map(([s,m])=>`<div class="dr"><span>${esc(s)}</span><span class="mono">${m}m · ${Math.round(m/st*100)}%</span></div><div class="tr"><i style="width:${m/st*100}%"></i></div>`).join(''):'<p class="mono" style="margin-top:16px">No sessions yet</p>'}</div></div>
  <div class="cols"><div><div class="mono" style="margin-top:34px">Practice accuracy by subject</div>${pa.length?pa.map(([s,a])=>`<div class="dr"><span>${esc(s)}</span><span class="mono">${a}%</span></div><div class="tr"><i style="width:${a}%"></i></div>`).join(''):'<p class="mono" style="margin-top:16px">No practice yet</p>'}</div>
  <div><div class="mono" style="margin-top:34px">Chapter progress</div><div class="dr"><span>Completed</span><span class="mono">${dn} / ${S.topics.length}</span></div><div class="tr"><i style="width:${S.topics.length?dn/S.topics.length*100:0}%"></i></div><div class="dr"><span>Solid confidence</span><span class="mono">${S.topics.filter(t=>t.confidence==='Solid').length}</span></div></div></div>
- ${sec('Data','04')}<div class="row dat"><div class="gr"><p>${ySt()} Export regularly; imports are validated and your current data is snapshotted first.</p></div><div class="ac"><button class="btn b" data-act="cloud">${Y.uid?'Cloud sync ●':'Cloud sync'}</button><button class="btn" data-act="export">Export</button><button class="btn" data-act="import">Import</button><button class="btn" data-act="mascot">Abiii ${S.set.mascot===false?'off':'on'}</button><button class="btn" data-act="abset">Settings</button><button class="btn" data-act="snaps">Snapshots</button>${localStorage.getItem(KP)?'<button class="btn" data-act="undo">Undo import</button>':''}</div></div>`}
+ <div class="cols"><div>${sylBlock()}</div><div>${rhythm()}</div></div>
+ ${sec('Data','04')}<div class="row dat"><div class="gr"><p>${ySt()} Export regularly; imports are validated and your current data is snapshotted first.${bkHint()}</p></div><div class="ac"><button class="btn b" data-act="cloud">${Y.uid?'Cloud sync <span id="cdot" style="color:'+ysCol()+'">●</span>':'Cloud sync'}</button><button class="btn" data-act="export">Export</button><button class="btn" data-act="import">Import</button><button class="btn" data-act="mascot">Abiii ${S.set.mascot===false?'off':'on'}</button><button class="btn" data-act="abset">Settings</button><button class="btn" data-act="snaps">Snapshots</button>${(IP||isIOS())&&!isApp()?'<button class="btn" data-act="inst">Install app</button>':''}${localStorage.getItem(KP)?'<button class="btn" data-act="undo">Undo import</button>':''}</div></div>`}
 
 const trow=(t,r)=>`<div class="row"><div class="gr"><div class="mono">${esc(t.subject)} · ${esc(t.status||'Unread')}${t.confidence?` · <span class="${esc(t.confidence)}">${esc(t.confidence)}</span>`:''}</div><h3>${esc(t.title)}</h3><div class="mono" style="margin-top:4px">${pages(t)}${dueLbl(t)}</div>${!r&&t.notes?`<p>${esc(t.notes)}</p>`:''}</div><div class="ac">${r?[['Forgot',1],['Hazy',3],['Solid',IV_S[Math.min(+t.reps||0,3)]]].map(([v,n])=>`<button class="btn" data-act="conf" data-id="${t.id}" data-v="${v}">${v}<em>${n}d</em></button>`).join(''):`<button class="btn" data-act="done" data-id="${t.id}">${t.status==='Done'?'Reopen':'Mark done'}</button>`}${edel('T',t.id)}</div></div>`;
 function rev(){
@@ -398,7 +414,7 @@ function lib(){
  return head(`${S.topics.length} chapters`,'Books',`<button class="btn p" data-act="addT">+ Chapter</button>`)+(S.topics.length?search()+chips()+(l.length?Object.entries(g).map(([s,a])=>sec(esc(s),a.filter(t=>t.status==='Done').length+' / '+a.length+' done')+a.map(t=>trow(t,0)).join('')).join(''):empty('No match','Try another search.')):empty('No chapters yet','Track textbook chapters, page ranges and targets.',`<button class="btn p" data-act="addT">+ Chapter</button>`))}
 function pra(){
  const l=S.practiceSets.filter(s=>match(s,['subject','title','mode','mistakes'])),a=acc(S.practiceSets);
- return head(a==null?'No data':`Overall accuracy ${a}%`,'Practice',`<button class="btn p" data-act="addP">+ Log set</button>`)+(S.practiceSets.length?search()+trend()+(l.length?l.slice().reverse().map(s=>{const r=+s.totalQ?Math.round(s.correctQ/s.totalQ*100):0;return `<div class="row"><div class="num" style="width:96px">${r}<small>%</small></div><div class="gr"><div class="mono">${esc(s.subject)} · ${esc(s.mode||'')} · ${fmt(s.date)}${s.timeMin?' · '+esc(s.timeMin)+' min':''}</div><h3>${esc(s.title)}</h3><div class="mono" style="margin-top:4px">${esc(s.correctQ)} / ${esc(s.totalQ)} correct</div>${s.mistakes?`<p>${esc(s.mistakes)}</p>`:''}</div><div class="ac">${edel('P',s.id)}</div></div>`}).join(''):empty('No match','Try another search.')):empty('No practice yet','Record scores and the mistakes worth remembering.',`<button class="btn p" data-act="addP">+ Log set</button>`))}
+ return head(a==null?'No data':`Overall accuracy ${a}%`,'Practice',`<button class="btn p" data-act="addP">+ Log set</button>`)+(S.practiceSets.length?search()+trend()+(l.length?l.slice().reverse().map(s=>{const r=+s.totalQ?Math.round(s.correctQ/s.totalQ*100):0;return `<div class="row"><div class="num" style="width:96px">${r}<small>%</small></div><div class="gr"><div class="mono">${esc(s.subject)} · ${esc(s.mode||'')} · ${fmt(s.date)}${s.timeMin?' · '+esc(s.timeMin)+' min':''}</div><h3>${esc(s.title)}</h3><div class="mono" style="margin-top:4px">${esc(s.correctQ)} / ${esc(s.totalQ)} correct${paceTxt(s)}</div>${s.mistakes?`<p>${esc(s.mistakes)}</p>`:''}</div><div class="ac">${edel('P',s.id)}</div></div>`}).join(''):empty('No match','Try another search.')):empty('No practice yet','Record scores and the mistakes worth remembering.',`<button class="btn p" data-act="addP">+ Log set</button>`))}
 
 const T={mode:'Breezy Glance',mins:25,left:1500,tot:1500,run:false,end:0,brk:false,subject:'General'};
 const W={run:false,start:0,acc:0},V={v:'timer'},KC='abiii_clock';
@@ -413,7 +429,7 @@ function restoreClock(){
     if(T.left<=0){if(!T.brk){S.focusLogs.unshift({id:Date.now(),subject:T.subject,durationMin:T.mins,mode:T.mode,date:iso(new Date(T.end))});save();const m=T.mins;setTimeout(()=>toast(m+' min session finished while away · logged'),700)}resetT()}}}
   const w=c.W;if(w&&typeof w==='object'){W.run=!!w.run&&+w.start>0;W.start=+w.start||0;W.acc=Math.max(0,+w.acc||0)}
   V.v=c.v==='sw'?'sw':'timer'}catch(e){}}
-function foSet(){const f=$('#fo');if(T.run||W.run){f.textContent='● '+(T.run?clk(T.left):clk2(Wms()));f.dataset.act='tab';f.dataset.v='foc';f.style.cursor='pointer';f.style.color='#7f9bff'}else{f.textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();delete f.dataset.act;f.style.cursor='';f.style.color=''}}
+function foSet(){const f=$('#fo');if(T.run||W.run){f.textContent='● '+(T.run?clk(T.left):clk2(Wms()));document.title=f.textContent.slice(2)+' · Abiii';f.dataset.act='tab';f.dataset.v='foc';f.style.cursor='pointer';f.style.color='#7f9bff'}else{f.textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();delete f.dataset.act;document.title='Abiii';f.style.cursor='';f.style.color=''}}
 function notify(t,b){try{if(typeof Notification==='undefined'||Notification.permission!=='granted'||!document.hidden)return;if(navigator.serviceWorker)navigator.serviceWorker.ready.then(r=>r.showNotification(t,{body:b,icon:'icon-192.png',tag:'abiii'}));else new Notification(t,{body:b})}catch(e){}}
 const resetT=()=>{T.run=false;T.brk=false;T.left=T.tot=T.mins*60};
 const clk=s=>pad(Math.floor(s/60))+':'+pad(s%60);
@@ -436,7 +452,7 @@ function tick(){
  if(T.run||W.run)foSet()}
 function finish(auto){
  if(auto)chime();if(auto)notify(T.brk?'Break over':'Focus session complete',T.brk?'Ready when you are.':T.mins+' min · '+(T.subject||'General'));
- if(T.brk){resetT();toast('Break over');render();return say('ready','Break over. Ready when you are.')}
+ if(T.brk){resetT();const ch=auto&&S.set.chain==='On';if(ch){T.end=Date.now()+T.left*1000;T.run=true}toast(ch?'Break over · next session started':'Break over');render();return say('ready',ch?'Break over. Next session is rolling.':'Break over. Ready when you are.')}
  const left=T.run?Math.max(0,Math.ceil((T.end-Date.now())/1000)):T.left,el=auto?T.mins:Math.round((T.tot-left)/60);
  if(el<1)return toast('Run the timer first');
  S.focusLogs.unshift({id:Date.now(),subject:T.subject||'General',durationMin:el,mode:T.mode,date:iso()});
@@ -444,7 +460,7 @@ function finish(auto){
  if(auto&&navigator.vibrate)navigator.vibrate([200,100,200]);mut(el+' min logged · '+(S.focusLogs[0].subject));const tm=mins(iso()),g=+S.set.goal||120;setTimeout(()=>{const hit=tm>=g&&tm-el<g;if(hit)say(Math.random()<.5?'kiss':'blush','Daily goal reached. So proud of you{n}.',1);else if(T.brk)say('chai',el+' min logged. Break time: sip, stretch.');else say('cheer',['Session logged. Proud of that.','Nice one{n}. That counts.','Look at you go.'][Math.floor(Math.random()*3)])},2600)}
 setInterval(tick,500);
 
-const exRow=e=>{const n=e.date?dd(e.date):NaN;return `<div class="row"><div class="gr"><div class="mono">${fmt(e.date)}</div><h3>${esc(e.title)}</h3><div class="mono" style="margin-top:4px">${esc(e.syllabus||'')}</div></div><div class="num" style="margin-right:8px">${isNaN(n)?'—':n>=0?n+'<small>days</small>':'<small>passed</small>'}</div><div class="ac">${edel('E',e.id)}</div></div>`};
+const exRow=e=>{const n=e.date?dd(e.date):NaN;return `<div class="row"><div class="gr"><div class="mono">${fmt(e.date)}</div><h3>${esc(e.title)}</h3><div class="mono" style="margin-top:4px">${esc(e.syllabus||'')}</div></div><div class="num ${n>=0&&n<=3?'rd':n>=0&&n<=7?'bl':''}" style="margin-right:8px">${isNaN(n)?'—':n>=0?dl2(n):'<small>passed</small>'}</div><div class="ac">${edel('E',e.id)}</div></div>`};
 function cal(){
  const days=[...Array(14)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()+i);const s=iso(d);return{d,i,t:S.topics.filter(t=>t.nextReview===s||t.targetDate===s),e:S.exams.filter(e=>e.date===s),m:mins(s)}}),ex=[...S.exams].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
  return head('Next 14 days','Plan',`<button class="btn p" data-act="addE">+ Exam</button>`)+sec('Study days','last 14 weeks')+hm()+sec('Next 14 days','agenda')+days.map(x=>`<div class="day ${x.i==0?'today':''} ${x.t.length+x.e.length+x.m?'':'dim'}"><div class="dn"><b>${x.d.getDate()}</b><span class="mono">${x.d.toLocaleDateString('en-GB',{weekday:'short'})}</span></div><div class="gr">${x.e.map(e=>`<span class="tag ex" data-act="editE" data-id="${e.id}">${esc(e.title)}</span>`).join('')}${x.t.map(t=>`<span class="tag" data-act="editT" data-id="${t.id}">${esc(t.title)}</span>`).join('')}${x.m?`<span class="mono">${x.m} min focused</span>`:''}</div></div>`).join('')+sec('Exams',ex.length)+(ex.length?ex.map(exRow).join(''):empty('No exams scheduled','Add exam dates to track countdowns.',`<button class="btn p" data-act="addE">+ Exam</button>`))}
@@ -666,17 +682,17 @@ function dismissSplash(){if(spDone)return;spDone=1;clearTimeout(splashTimer);con
 splashTimer=setTimeout(dismissSplash,8000);
 const TABS=[['home','Today','home'],['rev','Revise','rev'],['lib','Books','book'],['pra','Practice','pra'],['foc','Focus','foc'],['cal','Plan','cal']],PG={home,rev,lib,pra,foc,cal};
 function render(){try{renderInner()}catch(e){crash(e)}}
-function renderInner(){$('#nav').innerHTML=TABS.map(t=>`<button class="${S.tab==t[0]?'on':''}" data-act="tab" data-v="${t[0]}">${ic(t[2])}${t[1]}</button>`).join('');$('#app').innerHTML=PG[S.tab]();lvl();foSet();saveClock();wl()}
+function renderInner(){$('#nav').innerHTML=TABS.map(t=>`<button class="${S.tab==t[0]?'on':''}" data-act="tab" data-v="${t[0]}"${S.tab==t[0]?' aria-current="page"':''}>${ic(t[2])}${t[1]}${t[0]==='rev'?navBd():''}</button>`).join('');$('#app').innerHTML=PG[S.tab]();lvl();foSet();saveClock();wl()}
 
 function open(h){$('#ov').innerHTML=`<div class="mo"><div class="mc">${h}</div></div>`}
 const close=()=>$('#ov').innerHTML='';
 function form(title,fs,v,cb){
- open(`<form id="f"><h3>${title}</h3>${fs.map(f=>{const x=esc(v[f.n]),a=`name="${f.n}" ${f.r?'required':''}`;return `<label class="fl"><span class="mono">${f.l}</span>${f.o?`<select ${a}>${f.o.map(o=>`<option ${o==v[f.n]?'selected':''}>${o}</option>`).join('')}</select>`:f.t=='area'?`<textarea ${a} rows="3">${x}</textarea>`:`<input ${a} type="${f.t||'text'}" ${f.t=='number'?'min="0" inputmode="numeric"':''} value="${x}" ${f.dl?'list="dl2"':''}>`}</label>`}).join('')}<datalist id="dl2">${subjects().map(s=>`<option value="${esc(s)}">`).join('')}</datalist><div class="fa"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn p">Save</button></div></form>`);
+ open(`<form id="f"><h3>${title}</h3>${fs.map(f=>{const x=esc(v[f.n]),a=`name="${f.n}" ${f.r?'required':''} ${f.p?'placeholder="'+esc(f.p)+'"':''}`;return `<label class="fl"><span class="mono">${f.l}</span>${f.o?`<select ${a}>${f.o.map(o=>`<option ${o==v[f.n]?'selected':''}>${o}</option>`).join('')}</select>`:f.t=='area'?`<textarea ${a} rows="3">${x}</textarea>`:`<input ${a} type="${f.t||'text'}" ${f.t=='number'?'min="0" inputmode="numeric"':''} value="${x}" ${f.dl?'list="dl2"':''}>`}</label>`}).join('')}<datalist id="dl2">${subjects().map(s=>`<option value="${esc(s)}">`).join('')}</datalist><div class="fa"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn p">Save</button></div></form>`);
  $('#f').onsubmit=e=>{e.preventDefault();const o={};new FormData(e.target).forEach((x,k)=>o[k]=x);if(cb(o)!==false)close()}}
 function ask(msg,yes,lb='Delete'){open(`<h3>${msg}</h3><div class="fa"><button class="btn" data-act="close">Cancel</button><button class="btn r" id="ok">${lb}</button></div>`);$('#ok').onclick=()=>{close();yes()}}
-const TF=[{n:'subject',l:'Subject',r:1,dl:1},{n:'title',l:'Chapter title',r:1},{n:'startPage',l:'Start page',t:'number'},{n:'endPage',l:'End page',t:'number'},{n:'targetDate',l:'Target date',t:'date'},{n:'nextReview',l:'Next review',t:'date'},{n:'status',l:'Status',o:['Unread','Reading','Under Revision','Done']},{n:'confidence',l:'Confidence',o:['Forgot','Hazy','Solid']},{n:'notes',l:'Notes',t:'area'}];
-const PF=[{n:'subject',l:'Subject',r:1,dl:1},{n:'title',l:'Set title',r:1},{n:'mode',l:'Mode',o:['Breezy Glance','Hardcore Grind']},{n:'totalQ',l:'Total questions',t:'number',r:1},{n:'correctQ',l:'Correct',t:'number',r:1},{n:'timeMin',l:'Minutes taken',t:'number'},{n:'date',l:'Date',t:'date'},{n:'mistakes',l:'Mistake log',t:'area'}];
-const EF=[{n:'title',l:'Exam title',r:1},{n:'date',l:'Date',t:'date',r:1},{n:'syllabus',l:'Syllabus',}];
+const TF=[{n:'subject',l:'Subject',r:1,dl:1},{n:'title',l:'Chapter title',r:1},{n:'startPage',l:'Start page',t:'number'},{n:'endPage',l:'End page',t:'number'},{n:'targetDate',l:'Target date',t:'date'},{n:'nextReview',l:'Next review',t:'date'},{n:'status',l:'Status',o:['Unread','Reading','Under Revision','Done']},{n:'confidence',l:'Confidence',o:['Forgot','Hazy','Solid']},{n:'notes',l:'Notes',t:'area',p:'e.g. formula sheet on page 40'}];
+const PF=[{n:'subject',l:'Subject',r:1,dl:1},{n:'title',l:'Set title',r:1},{n:'mode',l:'Mode',o:['Breezy Glance','Hardcore Grind']},{n:'totalQ',l:'Total questions',t:'number',r:1},{n:'correctQ',l:'Correct',t:'number',r:1},{n:'timeMin',l:'Minutes taken',t:'number'},{n:'date',l:'Date',t:'date'},{n:'mistakes',l:'Mistake log',t:'area',p:'One line per wrong question: why it went wrong'}];
+const EF=[{n:'title',l:'Exam title',r:1},{n:'date',l:'Date',t:'date',r:1},{n:'syllabus',l:'Syllabus',p:'e.g. Chapters 1–4, 7'}];
 const LF=[{n:'subject',l:'Subject',r:1,dl:1},{n:'durationMin',l:'Minutes',t:'number',r:1},{n:'mode',l:'Mode',o:['Breezy Glance','Hardcore Grind','Stopwatch']},{n:'date',l:'Date',t:'date'}];
 const get=(k,id)=>S[k].find(x=>x.id===id),rm=(k,id,m)=>ask('Delete this '+m+'?',()=>{S[k]=S[k].filter(x=>x.id!==id);(S.set.dead=S.set.dead||[]).push({k,id,t:Date.now()});ySched();mut(m[0].toUpperCase()+m.slice(1)+' deleted')});
 const ed=(k,F,t,id,m)=>{const x=get(k,id);x&&form(t,F,x,o=>{if(k=='practiceSets'&&+o.correctQ>+o.totalQ){toast('Correct can’t exceed total');return false}if(k=='focusLogs')o.durationMin=Math.max(1,+o.durationMin||1);Object.assign(x,o);mut(m+' updated')})};
@@ -686,8 +702,8 @@ const ACT={
  close,
  addT:()=>form('New chapter',TF,{status:'Unread',confidence:'Forgot',nextReview:plus(0)},o=>{S.topics.push({id:Date.now(),...o,nextReview:o.nextReview||o.targetDate||plus(0)});mut('Chapter logged')}),
  editT:id=>ed('topics',TF,'Edit chapter',id,'Chapter'),delT:id=>rm('topics',id,'chapter'),
- done:id=>{const t=get('topics',id);t.status=t.status==='Done'?'Reading':'Done';mut(t.status==='Done'?'Marked done':'Reopened')},
- conf:(id,e)=>{const t=get('topics',id),v=e.dataset.v;t.confidence=v;if(t.status!=='Done')t.status='Under Revision';t.reps=v=='Solid'?(+t.reps||0)+1:v=='Forgot'?0:(+t.reps||0);t.nextReview=plus(v=='Solid'?IV_S[Math.min(t.reps-1,3)]:v=='Hazy'?3:1);mut(v+' · next review '+fmt(t.nextReview));if(v=='Solid'){FG=0;setTimeout(()=>say(S.set.cheeky!==false?'wink':'cheer',S.set.cheeky!==false?'Showing off, huh?':'Solid. That one is locked in.'),2600)}if(v=='Forgot'){FG++;setTimeout(()=>say('hug','Forgot is fine. That is how it sticks.'),2600)}},
+ done:id=>{const t=get('topics',id);t.status=t.status==='Done'?'Reading':'Done';t.doneOn=t.status==='Done'?iso():'';const nx=t.status==='Done'&&(!t.nextReview||t.nextReview<=iso());if(nx)t.nextReview=plus(1);mut(t.status==='Done'?(nx?'Marked done · first revisit tomorrow':'Marked done'):'Reopened')},
+ conf:(id,e)=>{const t=get('topics',id),v=e.dataset.v;t.confidence=v;if(t.status!=='Done')t.status='Under Revision';t.reps=v=='Solid'?(+t.reps||0)+1:v=='Forgot'?0:(+t.reps||0);t.nextReview=plus(v=='Solid'?IV_S[Math.min(t.reps-1,3)]:v=='Hazy'?3:1);t.revOn=iso();mut(v+' · next review '+fmt(t.nextReview));if(v=='Solid'){FG=0;setTimeout(()=>say(S.set.cheeky!==false?'wink':'cheer',S.set.cheeky!==false?'Showing off, huh?':'Solid. That one is locked in.'),2600)}if(v=='Forgot'){FG++;setTimeout(()=>say('hug','Forgot is fine. That is how it sticks.'),2600)}},
  addP:()=>form('Log practice set',PF,{mode:'Breezy Glance',date:plus(0)},o=>{if(+o.correctQ>+o.totalQ){toast('Correct can’t exceed total');return false}S.practiceSets.push({id:Date.now(),...o,date:o.date||plus(0)});mut('Practice set logged')}),
  editP:id=>ed('practiceSets',PF,'Edit practice set',id,'Practice set'),delP:id=>rm('practiceSets',id,'practice set'),
  addE:()=>form('New exam',EF,{},o=>{S.exams.push({id:Date.now(),...o});mut('Exam scheduled')}),
@@ -700,7 +716,7 @@ const ACT={
  reset:()=>{resetT();render()},fin:()=>finish(false),
  hi:()=>S.set.mascot===false?toast('Abiii is resting. Switch her on under Data'):say(null,null,0,1),
  mascotTap:()=>{if(S.set.mascot===false){toast('Abiii is resting. Switch her on under Data');return}const ck=S.set.cheeky!==false,now=Date.now();TAPN=now-TAPT>12e3?0:TAPN+1;TAPT=now;const L=[['idle','Hi{n}! Ready for a small step?'],['kiss','Mwah! A little heart for you.',1],[ck?'wink':'cheer','Psst. You are doing great.'],['blush','Okay, stop. You are making me blush.',1],[ck?'tease':'idle','Study first, cuddles later.'],['hug','Come here. Proud of you.',1]],x=L[TAPN%L.length];say(x[0],x[1],x[2],1)},
- abset:()=>form('Settings',[{n:'name',l:'Your name'},{n:'freq',l:'Abiii popups',o:['Normal','Rare','Off']},{n:'cheeky',l:'Cheeky lines',o:['On','Off']},{n:'qf',l:'Quiet from (hour 0-23)',t:'number'},{n:'qt',l:'Quiet until (hour 0-23)',t:'number'},{n:'notes',l:'Notes from me (one per line)',t:'area'},{n:'sound',l:'Timer chime',o:['On','Off']},{n:'awake',l:'Keep screen on while timing',o:['On','Off']}],{name:S.set.name||'',freq:S.set.mascot===false?'Off':(S.set.freq||'Normal'),cheeky:S.set.cheeky===false?'Off':'On',qf:S.set.qf===undefined?'':S.set.qf,qt:S.set.qt===undefined?'':S.set.qt,notes:(S.set.notes||[]).join('\n'),sound:S.set.sound||'On',awake:S.set.awake||'On'},o=>{const q=x=>x===''||isNaN(+x)?'':Math.max(0,Math.min(23,Math.floor(+x)));S.set.name=(o.name||'').trim().slice(0,24);S.set.freq=o.freq;S.set.mascot=o.freq!=='Off';S.set.cheeky=o.cheeky!=='Off';S.set.qf=q(o.qf);S.set.qt=q(o.qt);S.set.notes=String(o.notes||'').split('\n').map(x=>x.trim().slice(0,140)).filter(Boolean).slice(0,20);S.set.sound=o.sound;S.set.awake=o.awake;mut('Settings saved');wl()}),
+ abset:()=>form('Settings',[{n:'name',l:'Your name'},{n:'freq',l:'Abiii popups',o:['Normal','Rare','Off']},{n:'cheeky',l:'Cheeky lines',o:['On','Off']},{n:'qf',l:'Quiet from (hour 0-23)',t:'number'},{n:'qt',l:'Quiet until (hour 0-23)',t:'number'},{n:'notes',l:'Notes from me (one per line)',t:'area'},{n:'sound',l:'Timer chime',o:['On','Off']},{n:'awake',l:'Keep screen on while timing',o:['On','Off']},{n:'chain',l:'Auto-start next session after a break',o:['Off','On']},{n:'theme',l:'Appearance',o:['Dark','Light']}],{name:S.set.name||'',freq:S.set.mascot===false?'Off':(S.set.freq||'Normal'),cheeky:S.set.cheeky===false?'Off':'On',qf:S.set.qf===undefined?'':S.set.qf,qt:S.set.qt===undefined?'':S.set.qt,notes:(S.set.notes||[]).join('\n'),sound:S.set.sound||'On',awake:S.set.awake||'On',chain:S.set.chain||'Off',theme:S.set.theme||'Dark'},o=>{const q=x=>x===''||isNaN(+x)?'':Math.max(0,Math.min(23,Math.floor(+x)));S.set.name=(o.name||'').trim().slice(0,24);S.set.freq=o.freq;S.set.mascot=o.freq!=='Off';S.set.cheeky=o.cheeky!=='Off';S.set.qf=q(o.qf);S.set.qt=q(o.qt);S.set.notes=String(o.notes||'').split('\n').map(x=>x.trim().slice(0,140)).filter(Boolean).slice(0,20);S.set.sound=o.sound;S.set.awake=o.awake;S.set.chain=o.chain==='On'?'On':'Off';S.set.theme=o.theme==='Light'?'Light':'Dark';applyTheme();mut('Settings saved');wl()}),
  snaps:()=>{const k=Object.keys(localStorage).filter(x=>x.startsWith('abiii_snap_')).sort().reverse();open(`<h3>Daily snapshots</h3><p class="mono" style="margin-top:8px">Automatic copies of your data, last 3 days.</p>${k.length?k.map(x=>`<div class="row"><span>${esc(x.slice(11))}</span><button class="btn" data-act="snaprest" data-k="${esc(x)}">Restore</button></div>`).join(''):'<p style="margin-top:14px">None yet. One is saved each day you open the app.</p>'}<div class="fa"><button class="btn" data-act="close">Close</button></div>`)},
  snaprest:(_,e)=>{const k=e.dataset.k;ask('Restore the snapshot from '+k.slice(11)+'? Your current data is saved for undo.',()=>{try{const d=JSON.parse(localStorage.getItem(k));localStorage.setItem(KP,JSON.stringify({...Object.fromEntries(Object.keys(K).map(c=>[c,S[c]])),set:S.set}));for(const c in K)if(Array.isArray(d[c]))S[c]=d[c];mut('Snapshot restored')}catch(x){toast('Snapshot unreadable')}},'Restore')},
  sf:(_,e)=>{S.sf=e.dataset.v||'';render()},minimal:()=>document.body.classList.toggle('min'),reload:()=>location.reload(),
@@ -726,44 +742,39 @@ const ACT={
  wgo:()=>{if(W.run){W.acc+=Date.now()-W.start;W.run=false}else{W.start=Date.now();W.run=true}render()},
  wreset:()=>{const go=()=>{W.run=false;W.acc=0;W.start=0;render()};Wms()>6e4?ask('Reset the stopwatch without logging?',go,'Reset'):go()},
  wlog:()=>{const m=Wms();if(m<3e4)return toast('Too short to log');const go=()=>{const el=Math.max(1,Math.round(m/6e4));S.focusLogs.unshift({id:Date.now(),subject:T.subject||'General',durationMin:el,mode:'Stopwatch',date:iso()});W.run=false;W.acc=0;W.start=0;mut(el+' min logged · '+(T.subject||'General'));setTimeout(()=>say('cheer','Session logged. Proud of that.'),2600)};m>288e5?ask('Log '+clk2(m)+'? It may have kept running.',go,'Log it'):go()},
- export:()=>{const d={app:'abiii',version:2,exportedAt:new Date().toISOString(),topics:S.topics,practiceSets:S.practiceSets,exams:S.exams,focusLogs:S.focusLogs,settings:S.set},a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='abiii_study_backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4e3);toast('Backup exported')},
+ export:()=>{const d={app:'abiii',version:2,exportedAt:new Date().toISOString(),topics:S.topics,practiceSets:S.practiceSets,exams:S.exams,focusLogs:S.focusLogs,settings:S.set},a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='abiii_study_backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4e3);S.set.lastExport=iso();save();toast('Backup exported')},
  import:()=>$('#imp').click(),
  undo:()=>ask('Restore data from before the last import?',()=>{try{const d=JSON.parse(localStorage.getItem(KP));for(const k in K)S[k]=d[k]||[];S.set={...S.set,...d.set};localStorage.removeItem(KP);mut('Previous data restored')}catch(e){toast('Snapshot unreadable')}},'Restore')
 };
-function doImport(inp){
- const f=inp.files[0];inp.value='';if(!f)return;
- f.text().then(t=>{
-  const d=JSON.parse(t),o={};if(!d||typeof d!=='object'||Array.isArray(d))throw 0;
-  for(const k in K){if(d[k]===undefined)continue;if(!Array.isArray(d[k]))throw 0;o[k]=d[k].filter(x=>x&&typeof x==='object'&&!Array.isArray(x)).map((x,i)=>({...x,id:Number(x.id)||Date.now()+i}))}
-  if(!Object.keys(o).length)throw 0;
-  const n=k=>o[k]?o[k].length:'kept';
-  ask(`Replace current data with ${n('topics')} chapters, ${n('practiceSets')} practice sets, ${n('exams')} exams, ${n('focusLogs')} sessions? Your current data is saved for undo.`,()=>{
-   try{localStorage.setItem(KP,JSON.stringify({...Object.fromEntries(Object.keys(K).map(k=>[k,S[k]])),set:S.set}))}catch(e){}
-   for(const k in o)S[k]=o[k];
-   if(d.settings&&typeof d.settings==='object'){const g=+d.settings.goal;S.set={goal:g>0?g:S.set.goal,breaks:!!d.settings.breaks,mascot:d.settings.mascot!==false}}
-   mut('Backup restored')},'Import')
- }).catch(()=>toast('Invalid backup file — nothing changed'))}
-
-/* every popup: tap the dark area outside the box (or press Esc) to close and go back to the page */
-let mdn=null;const isBd=t=>t&&t.classList&&t.classList.contains('mo');
-document.addEventListener('pointerdown',e=>{mdn=isBd(e.target)?e.target:null},true);
-document.addEventListener('click',e=>{if(isBd(e.target)&&mdn===e.target){mdn=null;close()}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#ov .mo'))close()});
-document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;if(navigator.vibrate&&el.matches('.btn,nav button,.sw button,.fc'))navigator.vibrate(6);const f=ACT[el.dataset.act];f&&f(+el.dataset.id,el)});
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='yp'){const b=document.querySelector('[data-act="yin"][data-v="signInWithPassword"]');if(b)b.click()}});
-document.addEventListener('input',e=>{const i=e.target;if(i.id==='q'){const p=i.selectionStart;S.q=i.value;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)}if(i.id==='sj'){T.subject=i.value;saveClock()}});
-document.addEventListener('change',e=>{const i=e.target;if(i.id==='cm'){T.mins=Math.max(1,Math.min(600,+i.value||25));resetT();render()}if(i.id==='bk'){S.set.breaks=i.checked;save()}if(i.id==='imp')doImport(i)});
-(function(){try{S.set.schema=3;const k='abiii_snap_'+iso();if(!localStorage.getItem(k)&&(S.topics.length||S.practiceSets.length||S.exams.length||S.focusLogs.length))localStorage.setItem(k,JSON.stringify({topics:S.topics,practiceSets:S.practiceSets,exams:S.exams,focusLogs:S.focusLogs}));Object.keys(localStorage).filter(x=>x.startsWith('abiii_snap_')).sort().slice(0,-3).forEach(x=>localStorage.removeItem(x));save();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}})();
-setInterval(()=>{if(T.run||W.run||document.hidden)return;if(Math.random()<(S.set.freq==='Rare'?.12:.4))say()},6e5);
-/* finish a Google sign-in that went through the full-page redirect */
-(function(){if(!gRet)return;try{localStorage.removeItem('abiii_gredir')}catch(e){}
- gLoad().then(()=>GSDK.t.getRedirectResult(GSDK.auth)).then(r=>r?gDone(r):0).catch(e=>toast(gErr(e))).finally(()=>gBusy(0,1))})();
-restoreClock();render();
-if(Y.uid)setTimeout(()=>ySync(0),2500);addEventListener('online',()=>ySync(0));
-document.addEventListener('pointerdown',()=>{const a=$('#ab');if(a&&String(a.className).indexOf('show')>-1){clearTimeout(abT);a.className=''}},true);
-addEventListener('pagehide',saveClock);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveClock();else{tick();wl();if(Y.uid&&Date.now()-(Y.last||0)>12e4)ySync(0)}});
-setInterval(()=>{const b=$('.home-ab');if(b&&document.visibilityState==='visible'&&Math.random()<.16){b.classList.add('wave');setTimeout(()=>b.classList.remove('wave'),1600)}},52000);
-if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;let rl=0;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl&&!T.run&&!W.run){rl=1;location.reload()}});addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
-</script>
-</body>
-</html>
+/* ===== Final touches: today's plan, week summary + streak, syllabus bars, focus rhythm, goal hint, pace, global search, share card, install, light theme, sync dot ===== */
+const dayStr=n=>{const d=new Date();d.setDate(d.getDate()-n);return iso(d)};
+const studied=n=>{const s=dayStr(n);return mins(s)>0||S.practiceSets.some(p=>p.date===s)};
+/* streak: consecutive study days; one rest day is forgiven per 7 days; an empty today never breaks it */
+function streakInfo(){let n=0,last=-1,miss=-99;const ms=[];for(let i=0;i<400;i++){if(studied(i)){n++;last=i;continue}if(i===0)continue;if(i-miss>6){miss=i;ms.push(i);continue}break}return{n,rest:ms.filter(x=>x<last).length}}
+const sumMins=(a,b)=>{let t=0;for(let i=a;i<=b;i++)t+=mins(dayStr(i));return t};
+function weekStats(){const f=sumMins(0,6),pf=sumMins(7,13),inR=(d,a,b)=>{const x=dd(d);return x<=-a&&x>=-b};
+ const ses=S.focusLogs.filter(l=>l.date&&inR(l.date,0,6)).length,pw=S.practiceSets.filter(p=>p.date&&inR(p.date,0,6)),pp=S.practiceSets.filter(p=>p.date&&inR(p.date,7,13));
+ return{f,pf,ses,pw:pw.length,a:acc(pw),pa:acc(pp),rv:S.topics.filter(t=>t.revOn&&inR(t.revOn,0,6)).length,dn:S.topics.filter(t=>t.doneOn&&inR(t.doneOn,0,6)).length,st:streakInfo()}}
+const weekBlock=()=>{const w=weekStats(),dl=w.pf?Math.round((w.f-w.pf)/w.pf*100):null,ad=w.a!=null&&w.pa!=null?w.a-w.pa:null,
+ d=dl==null?'':`<div class="mono ${dl>=0?'dup':'ddn'}" style="margin-top:6px">${dl>=0?'+':''}${dl}% vs last week</div>`,
+ line=[w.a!=null?'Accuracy '+w.a+'%'+(ad!=null?' ('+(ad>=0?'+':'')+ad+')':''):'',w.rv?w.rv+' revised':'',w.dn?w.dn+' finished':''].filter(Boolean).join(' · ');
+ return `${sec('This week',new Date().getDay()===0?'Sunday wrap-up':'last 7 days')}<div class="st"><div><div class="mono">Focus</div><div class="num">${w.f}<small>min</small></div>${d}</div><div><div class="mono">Sessions</div><div class="num">${w.ses}</div><div class="mono" style="margin-top:6px">${w.pw} practice set${w.pw==1?'':'s'}</div></div><div><div class="mono">Streak</div><div class="num ${w.st.n?'bl':''}">${w.st.n}<small>day${w.st.n==1?'':'s'}</small></div><div class="mono" style="margin-top:6px">${w.st.rest?w.st.rest+' rest day forgiven':'1 rest day per week is free'}</div></div></div><p class="mono" style="margin-top:16px">${line||'Log sessions and practice sets to fill this in.'}</p>${weekNote(w,dl)}<div><button class="ln" data-act="share" style="margin:6px 0 0 -8px">Share this week</button></div>`};
+/* today's plan: up to 3 things, chosen once per day */
+const planRank=c=>({Forgot:0,Hazy:1}[c]??2);
+function planBuild(){const td=iso(),it=[],open=S.topics.filter(t=>t.status!=='Done'),
+ weak=open.slice().sort((a,b)=>planRank(a.confidence)-planRank(b.confidence)||(a.nextReview||'9').localeCompare(b.nextReview||'9'))[0];
+ if(weak&&planRank(weak.confidence)<2)it.push({t:'weak',id:weak.id});
+ const due=S.topics.filter(t=>t.nextReview&&t.nextReview<=td&&!it.some(x=>x.id===t.id)).sort((a,b)=>a.nextReview.localeCompare(b.nextReview))[0];
+ if(due)it.push({t:'rev',id:due.id});
+ const by={};S.practiceSets.forEach(s=>{const k=s.subject||'General';(by[k]=by[k]||[]).push(s)});
+ const pr=Object.entries(by).map(([k,v])=>[k,acc(v)]).filter(x=>x[1]!==null).sort((a,b)=>a[1]-b[1])[0],sj=subjects()[0];
+ if(pr)it.push({t:'pra',s:pr[0]});else if(sj)it.push({t:'pra',s:sj});
+ if(it.length<3){const nx=open.filter(t=>!it.some(x=>x.id===t.id)).sort((a,b)=>(a.targetDate||'9').localeCompare(b.targetDate||'9'))[0];if(nx)it.push({t:'read',id:nx.id})}
+ return it.slice(0,3)}
+function planGet(){const td=iso();if(!S.set.plan||S.set.plan.d!==td){S.set.plan={d:td,items:planBuild()};try{localStorage.setItem(KS,JSON.stringify(S.set))}catch(e){}}return S.set.plan.items}
+function planDone(x){if(x.x)return true;const td=iso();
+ if(x.t==='pra')return S.practiceSets.some(p=>p.date===td&&(p.subject||'General')===x.s);
+ const t=get('topics',x.id);if(!t)return true;
+ if(x.t==='rev')return t.revOn===td;
+ return S.focusLogs.some(l=>l.date===td&&(l.subject||'General')===(t.subject||'General'))}
+const planCard=()=>{if(!S.topics.length&&!S.practiceSets.length)return'';const L=planGet(),ok=L.map(x=>x.t==='pra'||!!get('topic
