@@ -260,7 +260,7 @@ const mut=m=>{save();render();toast(m)};
 // ---- Cloud sync (Firebase Auth + Realtime Database over REST; no SDK). Paste your keys here or enter them in the app once. ----
 const FB={apiKey:'AIzaSyD_Rnmb5PVOb9OYm4ND27x7g5rpLrAMC_E',url:'https://abiii-110308-default-rtdb.asia-southeast1.firebasedatabase.app/'};
 /* Google button inside the app (no redirect): paste your Web client ID here (Firebase → Authentication → Sign-in method → Google → Web SDK configuration). Leave '' to use the popup/redirect flow. */
-const GCID='';
+const GCID='446151566439-g9ev5g1irg487t52ko80rl4knac16rg4.apps.googleusercontent.com';
 let Y=(()=>{try{return JSON.parse(localStorage.getItem('abiii_sync'))||{}}catch(e){return{}}})(),yBusy=0,yT=0;
 const ySv=()=>{try{localStorage.setItem('abiii_sync',JSON.stringify(Y))}catch(e){}};
 const fbk=()=>FB.apiKey||S.set.fbKey||'',fbu=()=>String(FB.url||S.set.fbUrl||'').replace(/\/+$/,'');
