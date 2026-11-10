@@ -14,10 +14,11 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Inject Key File
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ github.workspace }}/firebase-key.json
-
       - name: Deploy to Firebase
-        run: firebase deploy --only hosting --project abiii-110308
+        run: firebase deploy --only hosting --project abiii-110308 --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: '${{ github.workspace }}/firebase-key.json'
+
+      - name: Inject Key File
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ github.workspace }}/firebase-key.json
+        before: Deploy to Firebase
